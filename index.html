@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10243a"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hobbs Calc">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><title>Hobbs & Blocks Calculator</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:24px 16px;background:#0b1724;color:#f4f8fb;font:16px system-ui;min-height:100vh}
+main{max-width:520px;margin:auto}h1{font-size:26px;margin:8px 0}p{color:#a9bbcc}.panel{background:#13263a;border:1px solid #29435d;border-radius:18px;padding:20px;margin:16px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin:14px 0}label{display:block;font-weight:650;font-size:14px;margin-bottom:7px}
+input{width:100%;padding:14px;border:1px solid #45627d;border-radius:11px;background:#0a1928;color:white;font:inherit}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:#71c7f2;color:#062033;font-weight:700;font-size:16px;margin-top:8px}
+button.secondary{background:#263e55;color:white;border:1px solid #45627d}.results{display:none}.row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #29435d}.row span{color:#c0cfdd}.row strong{font-size:19px;font-variant-numeric:tabular-nums}.primary strong{font-size:27px;color:#71c7f2}.error{display:none;color:#ffb7b7}.small{font-size:12px;line-height:1.5}footer{text-align:center;font-size:12px;color:#8297aa;margin:22px 0}
+@media(max-width:380px){.grid{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1>Hobbs & Blocks Calculator</h1><p>Calculate take-off, landing and block times from your Hobbs readings.</p>
+<section class="panel">
+<div class="grid">
+<div class="field"><label for="hobbsOff">Hobbs OFF</label><input id="hobbsOff" type="number" inputmode="decimal" step=".01" min="0" placeholder="125.40"></div>
+<div class="field"><label for="hobbsOn">Hobbs ON</label><input id="hobbsOn" type="number" inputmode="decimal" step=".01" min="0" placeholder="126.60"></div>
+</div>
+<div class="field"><label for="blocksOff">Blocks OFF (24-hour time)</label><input id="blocksOff" type="time" value="09:00"></div>
+<button id="calculate">Calculate times</button><p id="error" class="error" role="alert"></p>
+</section>
+<section id="results" class="panel results" aria-live="polite">
+<div class="row"><span>Hobbs difference</span><strong id="hobbsDiff">—</strong></div>
+<div class="row"><span>Blocks OFF</span><strong id="outBlocksOff">—</strong></div>
+<div class="row"><span>Take-off (+5 min)</span><strong id="takeoff">—</strong></div>
+<div class="row"><span>Landing (−5 min)</span><strong id="landing">—</strong></div>
+<div class="row primary"><span>Blocks ON</span><strong id="blocksOn">—</strong></div>
+<p class="small">Decimal Hobbs hours are converted to minutes (0.01 = 36 seconds). Clock times are rounded to the nearest minute. Times roll over midnight automatically.</p>
+<button class="secondary" id="reset">Clear calculator</button>
+</section><footer>Hobbs & Blocks Calculator</footer></main>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=m=>{m=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+$('calculate').onclick=()=>{
+ const a=$('hobbsOff').value,b=$('hobbsOn').value,t=$('blocksOff').value,e=$('error');
+ e.style.display='none';
+ if(a===''||b===''||!t||!Number.isFinite(+a)||!Number.isFinite(+b)){e.textContent='Enter both Hobbs readings and Blocks OFF time.';e.style.display='block';$('results').style.display='none';return}
+ if(+b<+a){e.textContent='Hobbs ON must be greater than or equal to Hobbs OFF.';e.style.display='block';$('results').style.display='none';return}
+ const diff=+b-(+a),duration=diff*60,[h,m]=t.split(':').map(Number),off=h*60+m,on=off+duration;
+ $('hobbsDiff').textContent=diff.toFixed(2)+' h ('+Math.floor(duration/60)+'h '+Math.round(duration%60)+'m approx.)';
+ $('outBlocksOff').textContent=fmt(off);$('takeoff').textContent=fmt(off+5);$('landing').textContent=fmt(on-5);$('blocksOn').textContent=fmt(on);
+ $('results').style.display='block';
+};
+$('reset').onclick=()=>{$('hobbsOff').value='';$('hobbsOn').value='';$('blocksOff').value='09:00';$('results').style.display='none';$('error').style.display='none';$('hobbsOff').focus()};
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script></body></html>
